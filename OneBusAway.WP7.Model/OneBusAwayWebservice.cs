@@ -379,8 +379,8 @@ namespace OneBusAway.WP7.Model
                 APIVERSION
                 );
 
-            HttpWebRequest requestGetter = (HttpWebRequest)HttpWebRequest.Create(requestUrl);
-            requestGetter.BeginGetResponse(delegate(IAsyncResult asyncResult)
+            WebRequest arrivalsForStopRequest = WebRequest.Create(requestUrl);
+            arrivalsForStopRequest.BeginGetResponse(asyncResult =>
                 {
                     XDocument xmlResponse = null;
                     List<ArrivalAndDeparture> arrivals = new List<ArrivalAndDeparture>();
@@ -403,7 +403,7 @@ namespace OneBusAway.WP7.Model
 
                     callback(arrivals);
                 },
-                requestGetter);
+                arrivalsForStopRequest);
         }
 
         public void ScheduleForStop(GeoCoordinate location, Stop stop, ScheduleForStop_Callback callback)

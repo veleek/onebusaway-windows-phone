@@ -43,16 +43,20 @@ namespace OneBusAway.WP7.ViewModel
 
         static LocationTrackerStatic()
         {
-            LastKnownLocation = null;
-
             locationWatcher = new GeoCoordinateWatcher(GeoPositionAccuracy.High);
             locationWatcher.MovementThreshold = 5; // 5 meters
             locationWatcher.PositionChanged += new EventHandler<GeoPositionChangedEventArgs<GeoCoordinate>>(LocationWatcher_PositionChanged);
             locationWatcher.StatusChanged += new EventHandler<GeoPositionStatusChangedEventArgs>(locationWatcher_StatusChanged);
 
+            GeoCoordinate savedLastKnownLocation;
+            if(IsolatedStorageSettings.ApplicationSettings.TryGetValue<GeoCoordinate>("LastKnownLocation", out savedLastKnownLocation))
+            {
+                LastKnownLocation = savedLastKnownLocation;
+            }
+
             // Only start the location service if location is enabled
-            if (IsolatedStorageSettings.ApplicationSettings.Contains("UseLocation") == false
-                || (bool)IsolatedStorageSettings.ApplicationSettings["UseLocation"] == true)
+            bool useLocation;
+            if (!IsolatedStorageSettings.ApplicationSettings.TryGetValue<bool>("UseLocation", out useLocation) || useLocation)
             {
                 locationWatcher.Start();
             }
@@ -71,11 +75,11 @@ namespace OneBusAway.WP7.ViewModel
             // The location service will return the last known location of the phone when it first starts up.  Since
             // we can't refresh the home screen wait until a recent location value is found before using it.  The
             // location must be less than 5 minute old.
-            if (e.Position.Location.IsUnknown == false)
+            if (!e.Position.Location.IsUnknown)
             {
-                if ((DateTime.Now - e.Position.Timestamp.DateTime) < new TimeSpan(0, 5, 0))
+                if ((DateTime.Now - e.Position.Timestamp.DateTime) < TimeSpan.FromMinutes(5))
                 {
-                    LastKnownLocation = e.Position.Location;
+                    IsolatedStorageSettings.ApplicationSettings["LastKnownLocation"] = LastKnownLocation = e.Position.Location;
                 }
             }
 

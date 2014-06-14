@@ -95,16 +95,13 @@ namespace OneBusAway.WP7.View
             this.popup.IsOpen = true;
 
             DispatcherTimer splashTimer = new DispatcherTimer();
-            splashTimer.Interval = new TimeSpan(0, 0, 0, 3, 0); // 5 secs
-            splashTimer.Tick += new EventHandler(splashTimer_Tick);
+            splashTimer.Interval = TimeSpan.FromSeconds(3);
+            splashTimer.Tick += (sender, e) =>
+                {
+                    this.Dispatcher.BeginInvoke(HideLoadingSplash);
+                    splashTimer.Stop();
+                };
             splashTimer.Start();
-        }
-
-        void splashTimer_Tick(object sender, EventArgs e)
-        {
-            this.Dispatcher.BeginInvoke(() => { HideLoadingSplash(); });
-
-            (sender as DispatcherTimer).Stop();
         }
 
         private void HideLoadingSplash()
@@ -130,26 +127,25 @@ namespace OneBusAway.WP7.View
                 // Since this is the first load, pull down the bus and stop info
                 viewModel.LoadInfoForLocation();
 
+                object selectedPivot;
+
                 // In this case, we've been re-created after a tombstone, resume their previous pivot
-                if (PhoneApplicationService.Current.State.ContainsKey("MainPageSelectedPivot") == true)
+                if(PhoneApplicationService.Current.State.TryGetValue("MainPageSelectedPivot", out selectedPivot))
                 {
-                    PC.SelectedIndex = (int)(MainPagePivots)PhoneApplicationService.Current.State["MainPageSelectedPivot"];
+                    PC.SelectedIndex = (int)(MainPagePivots)selectedPivot;
                 }
                 // The app was started fresh, not from tombstone.  Check pivot settings.  If there isn't a setting,
                 // default to the last used pivot
-                else if (IsolatedStorageSettings.ApplicationSettings.Contains("DefaultMainPagePivot") == true &&
-                        (MainPagePivots)IsolatedStorageSettings.ApplicationSettings["DefaultMainPagePivot"] >= 0)
+                else if (IsolatedStorageSettings.ApplicationSettings.TryGetValue("DefaultMainPagePivot", out selectedPivot) 
+                    && ((MainPagePivots)selectedPivot >= 0))
                 {
-                    PC.SelectedIndex = (int)(MainPagePivots)IsolatedStorageSettings.ApplicationSettings["DefaultMainPagePivot"];
+                    PC.SelectedIndex = (int)(MainPagePivots)selectedPivot;
                 }
-                else
+                // Is is set to use the previous pivot, if this key doesn't exist just leave
+                // the pivot selection at the default
+                else if (IsolatedStorageSettings.ApplicationSettings.TryGetValue("LastUsedMainPagePivot", out selectedPivot))
                 {
-                    // Is is set to use the previous pivot, if this key doesn't exist just leave
-                    // the pivot selection at the default
-                    if (IsolatedStorageSettings.ApplicationSettings.Contains("LastUsedMainPagePivot") == true)
-                    {
-                        PC.SelectedIndex = (int)(MainPagePivots)IsolatedStorageSettings.ApplicationSettings["LastUsedMainPagePivot"];
-                    }
+                    PC.SelectedIndex = (int)(MainPagePivots)selectedPivot;
                 }
             }
             firstLoad = false;

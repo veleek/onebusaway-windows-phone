@@ -87,8 +87,8 @@ namespace OneBusAway.WP7.View
             viewModel = Resources["ViewModel"] as RouteDetailsVM;
 
             busArrivalUpdateTimer = new DispatcherTimer();
-            busArrivalUpdateTimer.Interval = new TimeSpan(0, 0, 0, 30, 0); // 30 secs 
-            busArrivalUpdateTimer.Tick += new EventHandler(busArrivalUpdateTimer_Tick);
+            busArrivalUpdateTimer.Interval = TimeSpan.FromSeconds(30);
+            busArrivalUpdateTimer.Tick += busArrivalUpdateTimer_Tick;
 
             this.ApplicationBar.ForegroundColor = ((SolidColorBrush)Application.Current.Resources["OBAForegroundBrush"]).Color;
             // the native theme uses a shade of "gray" that is actually white or black with an alpha mask.
